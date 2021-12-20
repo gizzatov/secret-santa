@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:10-alpine
+    environment:
+      POSTGRES_DB: secret_santa
+      POSTGRES_HOST_AUTH_METHOD: trust
+    logging:
+      driver: "none"
+    ports:
+      - "5449:5432"
+    volumes:
+      - ${PWD}/data/postgres:/var/lib/postgresql/data
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: bash -c "wait && python manage.py run"
+    volumes:
+      - ${PWD}/app:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: secret_santa
+      DB_HOST: db
+      DB_PORT: 5432
+      DEBUG: ${DEBUG}
+      WAIT_HOSTS: db:5432
+      WAIT_SLEEP_INTERVAL: 3
+      WAIT_AFTER_HOSTS: 5
+      WAIT_HOSTS_TIMEOUT: 60
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    links:
+      - db
+    depends_on:
+      - db
