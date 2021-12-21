@@ -31,21 +31,31 @@ async def get_dialog_data(dialog_manager: DialogManager, **kwargs):
 async def code_handler(m: Message, dialog: Dialog, manager: DialogManager):
     code = m.text
     if ' ' in code:
-        return await m.answer('Код не может содержать пробелы')
+        await m.answer('Код не может содержать пробелы')
+        await manager.done()
+        return
 
     game = await Game.filter(code=code).prefetch_related('admin').first()
     if not game:
-        return await m.answer('Игры с таким кодом не существует :(')
+        await m.answer('Игры с таким кодом не существует :(')
+        await manager.done()
+        return
 
     if not game.is_running:
-        return await m.answer('Регистрация в эту игру невозможна (еще не начата, или уже закончена)')
+        await m.answer('Регистрация в эту игру невозможна (еще не начата, или уже закончена)')
+        await manager.done()
+        return
 
     if not game.player_can_leave_or_join:
-        return await m.answer('Регистрация в эту игру невозможна (игроки уже распределены)')
+        await m.answer('Регистрация в эту игру невозможна (игроки уже распределены)')
+        await manager.done()
+        return
 
     user = await User.filter(chat_id=m.chat.id).first()
     if await Player.filter(user=user, game=game).exists():
-        return await m.answer('Вы уже являетесь участником этой игры :)')
+        await m.answer('Вы уже являетесь участником этой игры :)')
+        await manager.done()
+        return
 
     manager.current_context().dialog_data['code'] = code
     manager.current_context().dialog_data['admin'] = game.admin.username

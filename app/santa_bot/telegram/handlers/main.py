@@ -59,6 +59,16 @@ RULES = (
 )
 
 
+ADMIN_COMMANDS = (
+    'GODMODE ON 😈'
+    '\nСписок админских команд:'
+    '\n- /new_game - менеджер создания игры'
+    '\n- /owned_games - менеджер существующих игр'
+    '\n- /link_group - прикрепление группы телеграма к существующей игре'
+    f'\n\nЕсли бот работает некорректно или есть вопросы по функционалу - пишите @{settings.ADMIN_USERNAME}'
+)
+
+
 async def set_commands(bot: Bot):
     commands = [
         types.BotCommand(command='/start', description='Старт работы с ботом'),
@@ -79,14 +89,18 @@ async def throttled_message(*args, **kwargs):
 @dp.message_handler(ChatTypeFilter(chat_type={types.chat.ChatType.PRIVATE}), commands=['start', 'help'])
 @dp.throttled(throttled_message, rate=2)
 async def start(message: types.Message):
-    if not await User.filter(chat_id=message.chat.id).exists():
-        await User.create(
+    user = await User.filter(chat_id=message.chat.id).first()
+    if not user:
+        user = await User.create(
             chat_id=message.chat.id,
             username=message.chat.username,
             full_name=message.chat.full_name,
         )
 
-    help_message = 'Чтобы принять участие в игре введите команду /register\n\n' + RULES
+    help_message = f'Чтобы принять участие в игре введите команду /register\n\n{RULES}'
+
+    if user.is_moderator:
+        help_message = f'{help_message}\n\n{ADMIN_COMMANDS}'
 
     await message.answer(help_message)
 
@@ -106,16 +120,7 @@ async def admin(message: types.Message):
     Admin panel
     """
 
-    answer = (
-        'GODMODE ON 😈'
-        '\nСписок админских команд:'
-        '\n- /new_game - менеджер создания игры'
-        '\n- /owned_games - менеджер существующих игр'
-        '\n- /link_group - менеджер существующих игр'
-        f'\n\nЕсли бот работает некорректно или есть вопросы по функционалу - пишите @{settings.ADMIN_USERNAME}'
-    )
-
-    await message.answer(answer)
+    await message.answer(ADMIN_COMMANDS)
 
 
 @dp.message_handler(ChatTypeFilter(chat_type={types.chat.ChatType.GROUP, types.chat.ChatType.SUPERGROUP}), commands=['link_group'])
