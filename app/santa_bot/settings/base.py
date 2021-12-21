@@ -36,3 +36,4 @@ TORTOISE_ORM = {
 }
 
 API_TOKEN = os.getenv('API_TOKEN')
+ADMIN_USERNAME = os.getenv('ADMIN_USERNAME')

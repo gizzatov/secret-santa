@@ -59,9 +59,9 @@ async def get_game_info__dialog_data(dialog_manager: DialogManager, **kwargs):
     return {
         'admin': game.admin.username,
         'code': game.code,
-        'started_at': game.started_at,
-        'submitting_finished_at': game.submitting_finished_at,
-        'finished_at': game.finished_at,
+        'started_at': game.started_at.strftime("%d.%m.%Y"),
+        'submitting_finished_at': game.submitting_finished_at.strftime("%d.%m.%Y"),
+        'finished_at': game.finished_at.strftime("%d.%m.%Y"),
     }
 
 

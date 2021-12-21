@@ -20,8 +20,6 @@ services:
     command: bash -c "wait && python manage.py run"
     volumes:
       - ${PWD}/app:/app
-    ports:
-      - "8000:8000"
     env_file:
       - .env
     environment:

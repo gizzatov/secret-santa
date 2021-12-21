@@ -1,18 +1,20 @@
-from datetime import date
 import operator
+from datetime import date
+from random import randint
 from typing import Any
 
 from aiogram import types
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
-from aiogram_dialog.widgets.kbd import Button, Cancel, Row, Select, Next, Back, SwitchTo
-from aiogram_dialog.widgets.kbd.group import Column
-from aiogram_dialog.widgets.text import Const, Format, Multi
-from santa_bot.db.models import Player, User, Game
-from santa_bot.telegram.middlewares import set_permission
 from aiogram_dialog.widgets.input import MessageInput
+from aiogram_dialog.widgets.kbd import (Back, Button, Cancel, Next, Row,
+                                        Select, SwitchTo)
+from aiogram_dialog.widgets.kbd.group import Column
+from aiogram_dialog.widgets.text import Const, Format
+from santa_bot.db.models import Game, Pair, Player, User
 from santa_bot.telegram.keyboards import CustomCalendar
+from santa_bot.telegram.middlewares import set_permission
 
 
 async def get_game_info_dialog_data(dialog_manager: DialogManager, **kwargs):
@@ -23,9 +25,9 @@ async def get_game_info_dialog_data(dialog_manager: DialogManager, **kwargs):
     return {
         'code': game.code,
         'description': game.description,
-        'started_at': game.started_at,
-        'submitting_finished_at': game.submitting_finished_at,
-        'finished_at': game.finished_at,
+        'started_at': game.started_at.strftime("%d.%m.%Y"),
+        'submitting_finished_at': game.submitting_finished_at.strftime("%d.%m.%Y"),
+        'finished_at': game.finished_at.strftime("%d.%m.%Y"),
         'players_count': players_count,
     }
 
@@ -83,19 +85,19 @@ async def description_handler(m: Message, dialog: Dialog, manager: DialogManager
 
 async def started_at_selected(c: types.CallbackQuery, widget, manager: DialogManager, selected_date: date, dialog):
     manager.current_context().dialog_data['started_at'] = selected_date
-    await c.message.answer(f'Новая дата начала сбора заявок: {str(selected_date)}')
+    await c.message.answer(f'Новая дата начала сбора заявок: {str(selected_date.strftime("%d.%m.%Y"))}')
     await dialog.next(manager)
 
 
 async def submitting_finished_at_selected(c: types.CallbackQuery, widget, manager: DialogManager, selected_date: date, dialog):
     manager.current_context().dialog_data['submitting_finished_at'] = selected_date
-    await c.message.answer(f'Новая дата окончания сбора заявок: {str(selected_date)}')
+    await c.message.answer(f'Новая дата окончания сбора заявок: {str(selected_date.strftime("%d.%m.%Y"))}')
     await dialog.next(manager)
 
 
 async def finished_at_selected(c: types.CallbackQuery, widget, manager: DialogManager, selected_date: date, dialog):
     manager.current_context().dialog_data['finished_at'] = selected_date
-    await c.message.answer(f'Новая дата окончания игры: {str(selected_date)}')
+    await c.message.answer(f'Новая дата окончания игры: {str(selected_date.strftime("%d.%m.%Y"))}')
     await dialog.next(manager)
 
 
@@ -393,6 +395,71 @@ player_list_dialog = Dialog(
 )
 
 
+# Santas select
+@set_permission(permission='admin')
+async def on_select_santas(c: CallbackQuery, widget: Any, manager: DialogManager):
+    start_data = manager.current_context().start_data
+    game = await Game.filter(id=start_data['game_id']).first()
+
+    if not game.status == Game.STATUSES.NEW:
+        await manager.done()
+        return await c.answer('Санты уже были выбраны')
+
+    santas = await game.players.all()
+    if len(santas) <= 1:
+        await manager.done()
+        return await c.answer('Слишком мало игроков')
+
+    if len(santas) % 2 != 0:
+        await manager.done()
+        return await c.answer('Нечетное количество игроков. Не могу распределить.')
+
+    targets = santas.copy()
+
+    leftover = None
+
+    targets_in_pair = []
+    while santas:
+        if len(santas) == 1:
+            leftover = santas[0]
+            break
+
+        santa = santas.pop(randint(0, len(santas)-1))
+        target = santas.pop(randint(0, len(santas)-1))
+
+        targets_in_pair.append(target.id)
+
+        await Pair.create(
+            game=game,
+            santa_id=santa.user_id,
+            target_id=target.user_id,
+            code=randint(100000, 999999),
+        )
+
+        santa = target
+        target = None
+        while target is None:
+            next_target_id = randint(0, len(targets)-1)
+            if targets[next_target_id].id not in targets_in_pair:
+                target = targets.pop(next_target_id)
+                break
+
+        await Pair.create(
+            game=game,
+            santa_id=santa.user_id,
+            target_id=target.user_id,
+            code=randint(100000, 999999),
+        )
+
+    game.status = Game.STATUSES.SANTAS_SELECTED
+    await game.save()
+    await manager.done()
+    if leftover:
+        await c.message.answer('Санты распределены! Но остался игрок без пары :(')
+    else:
+        await c.message.answer('Санты распределены!')
+
+
 # Game info
 class OwnedGameInfo(StatesGroup):
     game_id = State()
@@ -412,8 +479,7 @@ my_own_game_info_dialog = Dialog(
             Button(Const('Изменить игру'), id='edit_game', on_click=on_edit_game),
             Button(Const('Добавить игрока'), id='add_player', on_click=on_add_player_game),
             Button(Const('Список игроков'), id='player_list', on_click=on_player_list),
-            # SwitchTo(Const('Список игроков'), id='player_list', state=PlayersList.player_id),
-            # Button(Const('Распределить сант'), id='reveal_santas', on_click=on_select_santas),
+            Button(Const('Распределить сант'), id='reveal_santas', on_click=on_select_santas),
             # Button(Const('Раскрыть сант'), id='reveal_santas', on_click=on_reveal_santas),
             Button(Const('Удалить игру'), id='delete_game', on_click=on_delete_game),
         ),

@@ -49,9 +49,9 @@ async def code_handler(m: Message, dialog: Dialog, manager: DialogManager):
 
     manager.current_context().dialog_data['code'] = code
     manager.current_context().dialog_data['admin'] = game.admin.username
-    manager.current_context().dialog_data['started_at'] = str(game.started_at)
-    manager.current_context().dialog_data['submitting_finished_at'] = str(game.submitting_finished_at)
-    manager.current_context().dialog_data['finished_at'] = str(game.finished_at)
+    manager.current_context().dialog_data['started_at'] = str(game.started_at.strftime("%d.%m.%Y"))
+    manager.current_context().dialog_data['submitting_finished_at'] = str(game.submitting_finished_at.strftime("%d.%m.%Y"))
+    manager.current_context().dialog_data['finished_at'] = str(game.finished_at.strftime("%d.%m.%Y"))
     await dialog.next(manager)
 
 

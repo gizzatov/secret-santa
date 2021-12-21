@@ -4,13 +4,19 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters import ChatTypeFilter
 from aiogram_dialog import DialogRegistry
+
+from santa_bot import settings
 from santa_bot.db.models import Game, User
 from santa_bot.telegram.handlers import bot
-from santa_bot.telegram.handlers.admin_games import (delete_game_dialog,
+from santa_bot.telegram.handlers.admin_games import (add_player_dialog,
+                                                     delete_game_dialog,
+                                                     delete_player_dialog,
                                                      edit_game_dialog,
                                                      my_own_game_info_dialog,
                                                      my_own_games_dialog,
-                                                     my_own_games_start, add_player_dialog, player_list_dialog, player_info_dialog, delete_player_dialog)
+                                                     my_own_games_start,
+                                                     player_info_dialog,
+                                                     player_list_dialog)
 from santa_bot.telegram.handlers.join_game import (join_game_dialog,
                                                    join_game_start)
 from santa_bot.telegram.handlers.new_game import (new_game_dialog,
@@ -106,6 +112,7 @@ async def admin(message: types.Message):
         '\n- /new_game - менеджер создания игры'
         '\n- /owned_games - менеджер существующих игр'
         '\n- /link_group - менеджер существующих игр'
+        f'\n\nЕсли бот работает некорректно или есть вопросы по функционалу - пишите @{settings.ADMIN_USERNAME}'
     )
 
     await message.answer(answer)

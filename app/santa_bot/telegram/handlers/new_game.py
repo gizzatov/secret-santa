@@ -44,19 +44,19 @@ async def description_handler(m: Message, dialog: Dialog, manager: DialogManager
 
 async def started_at_selected(c: types.CallbackQuery, widget, manager: DialogManager, selected_date: date, dialog):
     manager.current_context().dialog_data['started_at'] = selected_date
-    await c.message.answer(f'Дата начала сбора заявок: {str(selected_date)}')
+    await c.message.answer(f'Дата начала сбора заявок: {str(selected_date.strftime("%d.%m.%Y"))}')
     await dialog.next(manager)
 
 
 async def submitting_finished_at_selected(c: types.CallbackQuery, widget, manager: DialogManager, selected_date: date, dialog):
     manager.current_context().dialog_data['submitting_finished_at'] = selected_date
-    await c.message.answer(f'Дата окончания сбора заявок: {str(selected_date)}')
+    await c.message.answer(f'Дата окончания сбора заявок: {str(selected_date.strftime("%d.%m.%Y"))}')
     await dialog.next(manager)
 
 
 async def finished_at_selected(c: types.CallbackQuery, widget, manager: DialogManager, selected_date: date, dialog):
     manager.current_context().dialog_data['finished_at'] = selected_date
-    await c.message.answer(f'Дата окончания игры: {str(selected_date)}')
+    await c.message.answer(f'Дата окончания игры: {str(selected_date.strftime("%d.%m.%Y"))}')
     await dialog.next(manager)
 
 
