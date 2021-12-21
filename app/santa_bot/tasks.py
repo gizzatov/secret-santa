@@ -14,23 +14,31 @@ async def notify_santa():
             message_to_santa = (
                 f'Ура-ура! Вы тайный санта по игре с кодом {pair.game.code}!'
                 f'\nВам необходимо выбрать подарок для {pair.target.full_name} '
-                f'(@{pair.target.username})' if pair.target.is_tg_user else ''
+                f'{ "(@" + pair.target.username + ")" if pair.target.is_tg_user else ""}'
                 f'\nНапишите на подарке вот этот код: {pair.code}. Именно по этому коду {pair.target.full_name} сможет найти свой подарок.'
                 f'\nПринесите подарок в точку сбора до {pair.game.finished_at.strftime("%d.%m.%Y")}'
-                f'\nКстати говоря {pair.target.full_name} имеет предпочтения, можете их учесть, если будет желание {pair.target.preferences}' if pair.target.preferences else ''
             )
+            if pair.target.preferences:
+                message_to_santa += (
+                    f'\nКстати говоря {pair.target.full_name} имеет предпочтения, можете их учесть, если будет желание:'
+                    f'\n{pair.target.preferences if pair.target.preferences else ""}'
+                )
             await send_message(pair.santa.chat_id, message_to_santa)
         else:
             message_to_santas_admin = (
                 f'По игре с кодом {pair.game.code} выбран тайный санта {pair.santa.full_name}.'
-                f'К сожалению он не является пользователем телеграм. Вы вносили его вручную. Вот данные, которые помогут его вспомнить:\n{pair.santa.description}'
+                f'\nК сожалению он не является пользователем телеграм. Вы вносили его вручную. Вот данные, которые помогут его вспомнить:\n{pair.santa.description}'
                 f'\nПередайте {pair.santa.full_name} это сообщение:'
                 f'\nВам необходимо выбрать подарок для {pair.target.full_name} '
-                f'(@{pair.target.username})' if pair.target.is_tg_user else ''
+                f'{ "(@" + pair.target.username + ")" if pair.target.is_tg_user else ""}'
                 f'\nНапишите на подарке вот этот код: {pair.code}. Именно по этому коду {pair.target.full_name} сможет найти свой подарок.'
                 f'\nПринесите подарок в точку сбора до {pair.game.finished_at.strftime("%d.%m.%Y")}'
-                f'\nКстати говоря {pair.target.full_name} имеет предпочтения, можете их учесть, если будет желание {pair.target.preferences}' if pair.target.preferences else ''
             )
+            if pair.target.preferences:
+                message_to_santa += (
+                    f'\nКстати говоря {pair.target.full_name} имеет предпочтения, можете их учесть, если будет желание:'
+                    f'\n{pair.target.preferences if pair.target.preferences else ""}'
+                )
             await send_message(pair.game.admin.chat_id, message_to_santas_admin)
 
         # Message to target
@@ -44,7 +52,7 @@ async def notify_santa():
         else:
             message_to_targets_admin = (
                 f'По игре с кодом {pair.game.code} для {pair.target.full_name} был выбран тайный санта.'
-                f'К сожалению он не является пользователем телеграм. Вы вносили его вручную. Вот данные, которые помогут его вспомнить:\n{pair.target.description}'
+                f'\nК сожалению он не является пользователем телеграм. Вы вносили его вручную. Вот данные, которые помогут его вспомнить:\n{pair.target.description}'
                 f'\nПередайте {pair.target.full_name} это сообщение:'
                 f'\nВам стоит поискать свой подарок в точке сбора после {pair.game.finished_at.strftime("%d.%m.%Y")}!'
                 f'\nНа подарке будет написан ваш уникальный код {pair.code}, так вы и узнаете свой подарок, удачи!'
